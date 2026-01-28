@@ -51,7 +51,6 @@ jQuery Fix: Turn on the safety wrapper for JavaScript execution.
 Slider Fix: Enable automated accessibility management for carousels.
 
 📁 File Structure
-Plaintext
 elek_optimization/
 ├── elek_optimization.php   # Core module logic & Hooks
 ├── views/
@@ -60,6 +59,7 @@ elek_optimization/
 │   └── js/
 │       └── front.js        # jQuery safety & Slider logic
 └── README.md               # Documentation
+
 👨‍💻 Author
 Markoo Passionate about web performance and clean code.
 
