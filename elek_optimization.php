@@ -111,24 +111,38 @@ class Elek_Optimization extends Module
     }
 
     public function hookDisplayHeader()
-    {
-        // LCP Preload Logic
-        if (Configuration::get('OPT_LCP_PRELOAD') && $this->context->controller->php_self == 'product') {
-            $product = $this->context->controller->getProduct();
+{
+    // Ellenőrizzük, hogy termékoldalon vagyunk-e és be van-e kapcsolva a funkció
+    if (Configuration::get('OPT_LCP_PRELOAD') && $this->context->controller->php_self == 'product') {
+        
+        // Biztonságos termék lekérés
+        $product = $this->context->controller->getProduct();
+        
+        if (Validate::isLoadedObject($product)) {
             $cover = $product->getCover($product->id);
-            if ($cover) {
+            
+            if ($cover && isset($cover['id_image'])) {
                 $img_url = $this->context->link->getImageLink($product->link_rewrite, $cover['id_image'], 'large_default');
-                $this->context->controller->addPlaceholder([
-                    'rel' => 'preload', 'as' => 'image', 'href' => $img_url, 'fetchpriority' => 'high'
-                ]);
+                
+                // Csak akkor adjuk hozzá, ha létezik a függvény, egyébként sima header kódként szúrjuk be
+                if (method_exists($this->context->controller, 'addPlaceholder')) {
+                    $this->context->controller->addPlaceholder([
+                        'rel' => 'preload', 'as' => 'image', 'href' => $img_url, 'fetchpriority' => 'high'
+                    ]);
+                } else {
+                    // Ha régebbi a PrestaShop, akkor manuálisan adjuk a fejléchez
+                    $this->context->smarty->assign(['lcp_preload_url' => $img_url]);
+                    return '<link rel="preload" as="image" href="'.$img_url.'" fetchpriority="high">';
+                }
             }
         }
-
-        $this->context->controller->addJS($this->_path . 'views/js/front.js');
-        $this->context->controller->addCSS($this->_path . 'views/css/front.css');
-
-        if (Configuration::get('OPT_JQUERY_FIX')) {
-            return '<script>var opt_jquery_active = true;</script>';
-        }
     }
+
+    $this->context->controller->addJS($this->_path . 'views/js/front.js');
+    $this->context->controller->addCSS($this->_path . 'views/css/front.css');
+
+    if (Configuration::get('OPT_JQUERY_FIX')) {
+        return '<script>var opt_jquery_active = true;</script>';
+    }
+}
 }
