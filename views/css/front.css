@@ -4,39 +4,27 @@
  * @copyright 2026 Markoo
  */
 
-/* 1. ACCESSIBILITY: Látható fókusz a Tab-bal navigálóknak */
-/* Sokan elfelejtik, de a Google bünteti, ha nincs keret a kijelölt elemen */
-a:focus, button:focus, input:focus {
-    outline: 3px solid #0056b3 !important;
-    outline-offset: 2px !important;
+/* 1. KATTINTÁSKORI KERET ELTÜNTETÉSE */
+/* Csak akkor mutasson keretet, ha billentyűzetről (Tab) navigálnak */
+a:focus, button:focus {
+    outline: none !important;
 }
 
-/* 2. TERMÉK CÍMKÉK (Product Flags): Magas kontraszt */
-/* Az "ÚJ" és "AKCIÓ" plecsnik sok sablonban túl világosak */
-.product-flags .product-flag.new, 
-.product-flags .product-flag.new span {
-    background-color: #004a99 !important; /* Sötétkék a fehér betűhöz */
+/* 2. ALÁHÚZÁSOK ELTÜNTETÉSE */
+/* Kivesszük az automatikus aláhúzást a láblécből */
+#footer a, .footer-container a {
+    text-decoration: none !important;
+}
+
+/* Csak ha ráviszed az egeret, akkor legyen aláhúzva (opcionális) */
+#footer a:hover, .footer-container a:hover {
+    text-decoration: underline !important;
+}
+
+/* 3. TERMÉK CÍMKÉK MARADJANAK (ez nem okoz hibát) */
+.product-flags .product-flag.new {
+    background-color: #004a99 !important;
     color: #ffffff !important;
-    text-transform: uppercase;
-    font-weight: 700 !important;
-    padding: 2px 8px !important;
-}
-
-.product-flags .product-flag.on-sale,
-.product-flags .product-flag.on-sale span {
-    background-color: #cc0000 !important; /* Erős piros a figyelemfelkeltéshez */
-    color: #ffffff !important;
-}
-
-/* 3. SLIDER VISIBILITY: Segítség a JS-nek */
-/* Biztosítjuk, hogy a rejtett slide-ok tényleg ne zavarják az olvasó szoftvereket */
-.slick-slide[aria-hidden="true"] {
-    visibility: hidden !important;
-    transition: visibility 0s 0.2s;
-}
-
-.slick-slide[aria-hidden="false"] {
-    visibility: visible !important;
 }
 
 /* 4. LÁBLÉC KONTRAST (Universal) */
