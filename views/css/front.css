@@ -1,39 +1,22 @@
 /**
  * Universal Performance & Accessibility Optimizer
  * @author    Markoo
- * @copyright 2026 Markoo
  */
 
-/* 1. KATTINTÁSKORI KERET ELTÜNTETÉSE */
-/* Csak akkor mutasson keretet, ha billentyűzetről (Tab) navigálnak */
-a:focus, button:focus {
-    outline: none !important;
-}
-
-/* 2. ALÁHÚZÁSOK ELTÜNTETÉSE */
-/* Kivesszük az automatikus aláhúzást a láblécből */
-#footer a, .footer-container a {
-    text-decoration: none !important;
-}
-
-/* Csak ha ráviszed az egeret, akkor legyen aláhúzva (opcionális) */
-#footer a:hover, .footer-container a:hover {
-    text-decoration: underline !important;
-}
-
-/* 3. TERMÉK CÍMKÉK MARADJANAK (ez nem okoz hibát) */
+/* Kontrasztosabb termékcímkék */
 .product-flags .product-flag.new {
     background-color: #004a99 !important;
     color: #ffffff !important;
+    font-weight: bold;
 }
 
-/* 4. LÁBLÉC KONTRAST (Universal) */
-/* Automatikusan javítja a lábléc linkjeinek olvashatóságát */
-#footer a, .footer-container a {
-    text-decoration: underline; /* WCAG előírás: a linkek legyenek aláhúzva */
+/* Billentyűzet fókusz láthatósága (WCAG Compliance) */
+a:focus, button:focus {
+    outline: 2px solid #0056b3 !important;
+    outline-offset: 3px;
 }
 
-#footer a:hover, .footer-container a:hover {
-    text-decoration: none;
-    filter: brightness(0.8);
+/* Slick Slider rejtett elemeinek kezelése */
+.slick-slide[aria-hidden="true"] {
+    visibility: hidden;
 }
