@@ -2,147 +2,97 @@
 /**
  * @author    Markoo
  * @copyright 2026 Markoo
- * @license   General Public License
  */
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+if (!defined('_PS_VERSION_')) exit;
 
-class Elek_Optimization extends Module
-{
-    public function __construct()
-    {
+// Beosztottak behívása
+require_once(dirname(__FILE__) . '/src/PerformanceHandler.php');
+require_once(dirname(__FILE__) . '/src/AccessibilityHandler.php');
+require_once(dirname(__FILE__) . '/src/ExtraHandler.php');
+
+class Elek_Optimization extends Module {
+    public function __construct() {
         $this->name = 'elek_optimization';
         $this->tab = 'front_office_features';
-        $this->version = '1.1.0';
+        $this->version = '2.0.0';
         $this->author = 'Markoo';
-        $this->need_instance = 0;
         $this->bootstrap = true;
-
         parent::__construct();
-
         $this->displayName = $this->l('Universal Performance & Accessibility Optimizer');
-        $this->description = $this->l('Boosts LCP, fixes jQuery errors, and improves UX accessibility.');
-
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
+        $this->description = $this->l('Modular optimization framework for any PrestaShop store.');
     }
 
-    public function install()
-    {
-        Configuration::updateValue('OPT_LCP_PRELOAD', true);
-        Configuration::updateValue('OPT_JQUERY_FIX', true);
-        Configuration::updateValue('OPT_SLICK_FIX', true);
-
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('displayHeader');
+    public function install() {
+        // 1. Telepítéskor MINDEN KI VAN KAPCSOLVA (0)
+        Configuration::updateValue('OPT_LCP_PRELOAD', 0);
+        Configuration::updateValue('OPT_HEADING_FIX', 0);
+        Configuration::updateValue('OPT_SLICK_FIX', 0);
+        Configuration::updateValue('OPT_JQUERY_FIX', 0);
+        return parent::install() && $this->registerHook('displayHeader');
     }
 
-    public function uninstall()
-    {
-        Configuration::deleteByName('OPT_LCP_PRELOAD');
-        Configuration::deleteByName('OPT_JQUERY_FIX');
-        Configuration::deleteByName('OPT_SLICK_FIX');
-
-        return parent::uninstall();
-    }
-
-    public function getContent()
-    {
+    public function getContent() {
         $output = '';
-        if (Tools::isSubmit('submitModule')) {
-            Configuration::updateValue('OPT_LCP_PRELOAD', Tools::getValue('OPT_LCP_PRELOAD'));
-            Configuration::updateValue('OPT_JQUERY_FIX', Tools::getValue('OPT_JQUERY_FIX'));
-            Configuration::updateValue('OPT_SLICK_FIX', Tools::getValue('OPT_SLICK_FIX'));
-            $output .= $this->displayConfirmation($this->l('Settings updated.'));
+        if (Tools::isSubmit('submit_opt')) {
+            // Mentés gomb megnyomása után aktiváljuk/frissítjük a beállításokat
+            Configuration::updateValue('OPT_LCP_PRELOAD', (int)Tools::getValue('OPT_LCP_PRELOAD'));
+            Configuration::updateValue('OPT_HEADING_FIX', (int)Tools::getValue('OPT_HEADING_FIX'));
+            Configuration::updateValue('OPT_SLICK_FIX', (int)Tools::getValue('OPT_SLICK_FIX'));
+            Configuration::updateValue('OPT_JQUERY_FIX', (int)Tools::getValue('OPT_JQUERY_FIX'));
+            $output .= $this->displayConfirmation($this->l('Settings saved and applied!'));
         }
-
         return $output . $this->renderForm();
     }
 
-    protected function renderForm()
-    {
+    protected function renderForm() {
         $helper = new HelperForm();
-        $helper->show_toolbar = false;
         $helper->module = $this;
-        $helper->default_form_language = $this->context->language->id;
-        $helper->submit_action = 'submitModule';
+        $helper->submit_action = 'submit_opt';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-
         $helper->fields_value = [
             'OPT_LCP_PRELOAD' => Configuration::get('OPT_LCP_PRELOAD'),
-            'OPT_JQUERY_FIX' => Configuration::get('OPT_JQUERY_FIX'),
+            'OPT_HEADING_FIX' => Configuration::get('OPT_HEADING_FIX'),
             'OPT_SLICK_FIX' => Configuration::get('OPT_SLICK_FIX'),
+            'OPT_JQUERY_FIX' => Configuration::get('OPT_JQUERY_FIX'),
         ];
 
+        // 2. DASHBOARD FELBONTÁSA SZEKCIÓKRA
         $form = [
             'form' => [
-                'legend' => ['title' => $this->l('Optimization Settings'), 'icon' => 'icon-cogs'],
+                'legend' => ['title' => $this->l('Optimization Dashboard'), 'icon' => 'icon-dashboard'],
                 'input' => [
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('LCP Image Preload'),
-                        'name' => 'OPT_LCP_PRELOAD',
-                        'desc' => $this->l('Automatically preloads the product cover image with high priority.'),
-                        'values' => [['id' => 'on', 'value' => 1], ['id' => 'off', 'value' => 0]],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('jQuery "ReferenceError" Fix'),
-                        'name' => 'OPT_JQUERY_FIX',
-                        'desc' => $this->l('Prevents "$ is not defined" by waiting for jQuery to load.'),
-                        'values' => [['id' => 'on', 'value' => 1], ['id' => 'off', 'value' => 0]],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Slick Slider Accessibility'),
-                        'name' => 'OPT_SLICK_FIX',
-                        'desc' => $this->l('Corrects focus issues for hidden slides in carousels.'),
-                        'values' => [['id' => 'on', 'value' => 1], ['id' => 'off', 'value' => 0]],
-                    ],
+                    // --- PERFORMANCE ---
+                    ['type' => 'html', 'name' => 'header_perf', 'html_content' => '<h4><i class="icon-bolt"></i> Performance</h4><hr>'],
+                    ['type' => 'switch', 'label' => 'LCP Image Preload', 'name' => 'OPT_LCP_PRELOAD', 'is_bool' => true, 'values' => [['id'=>'on','value'=>1],['id'=>'off','value'=>0]], 'desc' => 'Prioritizes main product image for faster loading.'],
+                    
+                    // --- ACCESSIBILITY ---
+                    ['type' => 'html', 'name' => 'header_acc', 'html_content' => '<br><h4><i class="icon-user"></i> Accessibility</h4><hr>'],
+                    ['type' => 'switch', 'label' => 'Heading Fix (h5->h2)', 'name' => 'OPT_HEADING_FIX', 'is_bool' => true, 'values' => [['id'=>'on','value'=>1],['id'=>'off','value'=>0]], 'desc' => 'Fixes SEO heading structure.'],
+                    ['type' => 'switch', 'label' => 'Slick Slider Fix', 'name' => 'OPT_SLICK_FIX', 'is_bool' => true, 'values' => [['id'=>'on','value'=>1],['id'=>'off','value'=>0]], 'desc' => 'Improves carousel keyboard navigation.'],
+                    
+                    // --- EXTRA ---
+                    ['type' => 'html', 'name' => 'header_extra', 'html_content' => '<br><h4><i class="icon-plus"></i> Extra</h4><hr>'],
+                    ['type' => 'switch', 'label' => 'jQuery Safety Fix', 'name' => 'OPT_JQUERY_FIX', 'is_bool' => true, 'values' => [['id'=>'on','value'=>1],['id'=>'off','value'=>0]], 'desc' => 'Prevents "$ is not defined" console errors.'],
                 ],
-                'submit' => ['title' => $this->l('Save')],
-            ],
+                'submit' => ['title' => $this->l('Save Settings'), 'class' => 'btn btn-primary pull-right']
+            ]
         ];
-
         return $helper->generateForm([$form]);
     }
 
-    public function hookDisplayHeader()
-{
-    // Ellenőrizzük, hogy termékoldalon vagyunk-e és be van-e kapcsolva a funkció
-    if (Configuration::get('OPT_LCP_PRELOAD') && $this->context->controller->php_self == 'product') {
-        
-        // Biztonságos termék lekérés
-        $product = $this->context->controller->getProduct();
-        
-        if (Validate::isLoadedObject($product)) {
-            $cover = $product->getCover($product->id);
-            
-            if ($cover && isset($cover['id_image'])) {
-                $img_url = $this->context->link->getImageLink($product->link_rewrite, $cover['id_image'], 'large_default');
-                
-                // Csak akkor adjuk hozzá, ha létezik a függvény, egyébként sima header kódként szúrjuk be
-                if (method_exists($this->context->controller, 'addPlaceholder')) {
-                    $this->context->controller->addPlaceholder([
-                        'rel' => 'preload', 'as' => 'image', 'href' => $img_url, 'fetchpriority' => 'high'
-                    ]);
-                } else {
-                    // Ha régebbi a PrestaShop, akkor manuálisan adjuk a fejléchez
-                    $this->context->smarty->assign(['lcp_preload_url' => $img_url]);
-                    return '<link rel="preload" as="image" href="'.$img_url.'" fetchpriority="high">';
-                }
-            }
-        }
-    }
+    public function hookDisplayHeader() {
+        $html = '';
+        // A Főnök megkérdezi a beosztottakat, kell-e csinálniuk valamit
+        $html .= PerformanceHandler::run($this->context);
+        $html .= AccessibilityHandler::run($this->context);
+        $html .= ExtraHandler::run($this->context);
 
-    $this->context->controller->addJS($this->_path . 'views/js/front.js');
-    $this->context->controller->addCSS($this->_path . 'views/css/front.css');
+        // Alap fájlok behúzása
+        $this->context->controller->addJS($this->_path . 'views/js/front.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/front.css');
 
-    if (Configuration::get('OPT_JQUERY_FIX')) {
-        return '<script>var opt_jquery_active = true;</script>';
+        return $html;
     }
-}
 }
