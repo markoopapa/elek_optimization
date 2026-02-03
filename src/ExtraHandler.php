@@ -1,7 +1,13 @@
 <?php
 class ExtraHandler {
-    public static function run($context) {
-        $jquery = (int)Configuration::get('OPT_JQUERY_FIX');
-        return '<script>var opt_jquery_active = ' . $jquery . ';</script>';
+    public static function handleEmptyCart($html, $context) {
+        // 1. TÖRLÉSI LOGIKA: Bármelyik oldalon futhat
+        if (Tools::getValue('empty_cart') == 1) {
+            $context->cart->delete();
+            $context->cookie->write();
+            // Visszairányítunk oda, ahol voltunk, de paraméter nélkül
+            Tools::redirect($context->link->getPageLink($context->controller->php_self));
+        }
+        return $html;
     }
 }
