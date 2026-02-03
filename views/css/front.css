@@ -1,22 +1,210 @@
-/**
- * Universal Performance & Accessibility Optimizer
- * @author    Markoo
- */
+/* --- 1. GLOBÁLIS ÉS SEO FIXEK (H2 SZELLEM MÓDSZER) --- */
+h2.product-name {
+    display: contents !important;
+    all: unset !important;
+}
 
-/* Kontrasztosabb termékcímkék */
-.product-flags .product-flag.new {
-    background-color: #004a99 !important;
-    color: #ffffff !important;
+h2.product-name a {
+    display: block !important;
+    text-align: center !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #232323 !important;
+    text-decoration: none !important;
+    line-height: 1.4 !important;
+    margin-top: 10px !important;
+    margin-bottom: 5px !important;
+}
+
+/* --- 2. ACCESSIBILITY ÉS UI JAVÍTÁSOK --- */
+.slick-slide[aria-hidden="true"] { visibility: hidden !important; }
+
+#header .header-logo .logo { max-height: 55px; }
+
+/* --- VÉGLEGES STÍLUS: SZÉLESSÉG FIX ÉS DUPLA SZÖVEG ELTÜNTETÉSE --- */
+
+/* 1. KONTÉNER (buttons-sections) */
+/* A flex-wrap: nowrap a kulcs, hogy ne törjön új sorba! */
+.buttons-sections.elek-container-active {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important; /* TILOS új sorba törni */
+    align-items: stretch !important; /* Egyforma magasak */
+    justify-content: center !important;
+    width: 100% !important;
+    height: 34px !important;
+    margin-top: 10px !important;
+    gap: 5px !important; /* Pici hézag */
+}
+
+/* 2. MENNYISÉGVÁLASZTÓ (Bal oldal) */
+.buttons-sections .elek-list-qty {
+    display: flex !important;
+    flex: 0 0 75px !important; /* FIX SZÉLESSÉG: 75px */
+    width: 75px !important;
+    min-width: 75px !important; /* Nem mehet ez alá */
+    height: 34px !important;
+    background: #fff;
+    border: 1px solid #ccc !important;
+    border-radius: 4px;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Gombok és Input */
+.elek-list-qty button {
+    width: 22px !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    cursor: pointer;
     font-weight: bold;
+    font-size: 16px !important;
+    line-height: 32px !important;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Billentyűzet fókusz láthatósága (WCAG Compliance) */
-a:focus, button:focus {
-    outline: 2px solid #0056b3 !important;
-    outline-offset: 3px;
+.elek-list-qty input.list-qty-input {
+    width: 29px !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13px !important;
+    color: #333;
+    height: 32px !important;
+    -moz-appearance: textfield;
+}
+.elek-list-qty input::-webkit-outer-spin-button,
+.elek-list-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+
+/* 3. GYÁRI GOMB (Asztali nézeten: kicsi és fix) */
+.buttons-sections.elek-container-active .btn.add-to-cart {
+    /* --- ANIMÁCIÓ GYILKOS --- */
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    
+    /* --- ASZTALI MÉRETEZÉS (Fix 80px) --- */
+    /* Ez a sor számolja ki a helyet, de a max-width korlátozza */
+    flex: 0 0 calc(100% - 80px) !important; 
+    width: calc(100% - 80px) !important;
+    max-width: 128px !important; /* ASZTALIN ez fogja meg a gombot */
+    
+    min-width: 0 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    
+    margin: 0 !important;
+    padding: 0 5px !important;
+    line-height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    float: none !important;
 }
 
-/* Slick Slider rejtett elemeinek kezelése */
-.slick-slide[aria-hidden="true"] {
-    visibility: hidden;
+/* --- DUPLA SZÖVEG ELTÜNTETÉSE --- */
+.buttons-sections.elek-container-active .text-for-list { display: none !important; }
+.buttons-sections.elek-container-active .text-for-grid {
+    display: inline-block !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+
+/* Készlet */
+.elek-modern-stock {
+    text-align: center; font-size: 10px; color: #28a745; margin-bottom: 2px; display: block; width: 100%;
+}
+
+/* --- MOBIL SPECIFIKUS JAVÍTÁS (Max 767px szélességig) --- */
+/* Itt oldjuk fel a gomb korlátait, hogy mobilon kitöltse a sort */
+@media (max-width: 767px) {
+    .buttons-sections.elek-container-active .btn.add-to-cart {
+        max-width: none !important; /* Levesszük a 80px-es láncot */
+        flex: 1 1 auto !important;  /* Engedjük, hogy kitöltse a helyet */
+    }
+    
+    /* Mobilon a konténer széthúzhatja őket, hogy ne legyen köztük lyuk */
+    .buttons-sections.elek-container-active {
+        justify-content: space-between !important;
+    }
+}
+
+/* --- 4. KOSÁR ÜRÍTÉS ÉS MODAL --- */
+.elek-empty-cart-btn a { display: block; width: 100%; background: #B20301; color: #fff !important; padding: 10px; text-align: center; font-weight: bold; border-radius: 4px; margin-top: 10px; text-transform: uppercase; font-size: 13px; }
+#elek-confirm-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 10000000; backdrop-filter: blur(2px); }
+.elek-confirm-box { background: #fff; padding: 25px; border-radius: 15px; max-width: 320px; width: 90%; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3); }
+.elek-confirm-btns { display: flex; gap: 10px; margin-top: 20px; }
+.elek-btn-no { background: #eee; color: #333 !important; flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; }
+.elek-btn-yes { background: #B20301; color: #fff !important; flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
+
+/* --- 5. CHECKOUT OPTIMALIZÁLÓ (TISZTÍTOTT VERZIÓ) --- */
+
+/* Cégválasztó Konténer */
+.elek-client-type-selector {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 30px 0 !important;
+    padding: 20px !important;
+    background: #f9f9f9 !important;
+    border-radius: 10px !important;
+    border: 1px solid #ddd !important;
+    width: 100% !important;
+}
+
+/* Alap gomb stílus (Kártyák) */
+.elek-card {
+    flex: 1;
+    cursor: pointer;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    background: #fff;
+    transition: all 0.3s ease;
+    color: #333;
+}
+
+/* AKTÍV KÁRTYA */
+.elek-card.active {
+    border-color: var(--st-theme-color, #B20301) !important; 
+    color: var(--st-theme-color, #B20301) !important;
+    background-color: #fff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+.elek-card:hover:not(.active) { border-color: #bbb; background-color: #f9f9f9; }
+
+/* -- LAKAT ÉS KULCS (BEVILLANÁS ELLEN) -- */
+
+/* Ha a cégválasztó aktív, a gender sort rejtjük */
+body.elek-optimizer-on .form-group:has(input[name="id_gender"]) {
+    display: none !important;
+}
+
+/* 1. LAKAT: Alapból rejtve marad minden mező a címnél */
+body.elek-optimizer-on [data-step-part-id="checkout-addresses-step"] .form-group:not(.elek-client-type-selector) {
+    display: none !important;
+}
+
+/* 2. KULCS: Amint a JS ráteszi az osztályt, engedélyezzük a megjelenítést (NINCS !important) */
+body.elek-optimizer-on .elek-selection-made .form-group {
+    display: flex;
+}
+
+/* 3. KIVÉTEL: A választó gombok mindig látszódjanak */
+.elek-client-type-selector {
+    display: flex !important;
 }
