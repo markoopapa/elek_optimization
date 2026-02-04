@@ -208,3 +208,100 @@ body.elek-optimizer-on .elek-selection-made .form-group {
 .elek-client-type-selector {
     display: flex !important;
 }
+
+/* --- GYÁRTÓ LOGÓK TESZT (Szürke háttérrel) --- */
+img[src*="/img/m/"] {
+    /* KÉNYSZERÍTETT MÉRET */
+    width: 210px !important;
+    height: 80px !important;
+    max-width: 100% !important;
+
+    /* ARÁNYTARTÓ ILLESZTÉS */
+    object-fit: contain !important;
+
+    display: block !important;
+    margin: 0 auto !important;
+    
+    /* TESZT HÁTTÉR - Hogy lásd a doboz méretét */
+    background-color: #f0f0f0 !important; 
+    border: 1px solid #ccc !important;
+}
+
+/* --- COOKIE BANNER LCP JAVÍTÁS --- */
+/* Minden elemre hat, ami megkapta a PHP-tól a jelölést */
+div[data-elek-cookie="1"] {
+    /* Ez segít a böngészőnek, hogy ne számolja újra az egész oldalt miatta */
+    contain: layout style !important;
+    
+    /* A 'content-visibility: auto'-t KIVETTEM, mert Cookie Bannernél 
+       gyakran eltünteti az egészet, ha az oldal alján van! 
+       A 'contain' bőven elég a sebességhez. */
+}
+
+/* --- MENNYISÉG GOMBOK: FIX 24x34 és 34 Magas Input --- */
+.elek-list-qty {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* TÉRKÖZ: A Google miatt kell kis szünet (5px), 
+       hogy a 24px széles gomb elfogadható legyen */
+    gap: 5px !important; 
+    
+    /* HELYCSINÁLÁS lefelé */
+    margin-bottom: 15px !important; 
+    margin-top: 5px !important;
+    
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* A GOMBOK (+ és -) -> Fix 24px széles, 34px magas */
+.elek-list-qty button.btn-m, 
+.elek-list-qty button.btn-p {
+    width: 24px !important;      /* Kért szélesség */
+    min-width: 24px !important;  /* KÉNYSZERÍTÉS: Ne nyomódjon össze 9px-re! */
+    height: 34px !important;     /* Kért magasság */
+    
+    /* Hogy ne torzuljon el */
+    flex-shrink: 0 !important;
+    
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    /* Szöveg középre */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    
+    cursor: pointer !important;
+    background: #f6f6f6;
+    border: 1px solid #cccccc;
+    border-radius: 4px !important;
+}
+
+/* AZ INPUT (számmező) -> 34px magas */
+.elek-list-qty input.list-qty-input {
+    height: 34px !important;     /* Kért magasság (egyezik a gombbal) */
+    width: 25px !important;      /* Kicsit szélesebb, hogy a szám kényelmesen elférjen */
+    min-width: 25px !important;
+    
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    
+    border: 1px solid #cccccc;
+    border-radius: 4px !important;
+    background: #ffffff;
+}
+
+.buttons-sections .elek-list-qty {
+    flex: 0 0 80px !important
+}
+
+.elek-list-qty {
+    gap: 2px !important;
+}
