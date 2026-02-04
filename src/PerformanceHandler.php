@@ -43,24 +43,59 @@ class PerformanceHandler {
     }
     
     /**
-     * Hátrasorolja a süti sávot és egyéb blokkoló elemeket.
+     * Cookie Banner LCP Fix (MAXIMÁLIS SEBESSÉG Verzió)
+     * Mindent késleltetünk, mert a CookieYes szervere lassú (1.2s blocking).
      */
     public static function fixCookieBanner($html) {
         if (!Configuration::get('OPT_COOKIE_FIX')) return $html;
 
-        // Konténer optimalizálása CSS contain használatával
+        // 1. DIV KEZELÉS: Adat attribútum hozzáadása a CSS contain-hez
         $html = preg_replace(
             '/(<div[^>]*?class=["\'][^"\']*(?:cookie|gdpr|consent|banner)[^"\']*["\'][^>]*?)>/i', 
-            '$1 style="content-visibility: auto; contain: layout style;">', 
+            '$1 data-elek-cookie="1">', 
             $html
         );
 
-        // Scriptek alacsony prioritásra állítása
+        // 2. SCRIPT KEZELÉS: MINDENT KÉSLELTETÜNK!
+        // Visszatettem a cookie|consent szavakat, és hozzáadtam a 'cookieyes'-t is.
+        // Így nem blokkolja a renderelést 1.2 másodpercig.
         $html = preg_replace(
-            '/(<script[^>]*?(?:cookie|gdpr|consent|analytics)[^>]*?)>/i', 
+            '/(<script[^>]*?src=["\'][^"\']*(?:cookie|gdpr|consent|analytics|gtm|pixel|facebook)[^"\']*["\'][^>]*?)>/i', 
             '$1 fetchpriority="low" defer>', 
             $html
         );
+
+        return $html;
+    }
+	
+	/**
+     * SEO Link Javítás (Vue.js és Wishlist hibák)
+     * 1. Kicseréli a :href="prestashop..." kódot.
+     * 2. Pótolja a hiányzó href-et a wishlist gomboknál.
+     */
+    public static function fixSeoLinks($html) {
+        
+        // --- 1. LOGIN JAVÍTÁS (Ez volt eddig is) ---
+        if (strpos($html, ':href="prestashop.urls.pages.authentication"') !== false) {
+            $loginUrl = Context::getContext()->link->getPageLink('authentication', true);
+            $html = str_replace(
+                ':href="prestashop.urls.pages.authentication"',
+                'href="' . $loginUrl . '"',
+                $html
+            );
+        }
+
+        // --- 2. ÚJ: WISHLIST JAVÍTÁS (Kívánságlista) ---
+        // A hiba: <a class="wishlist-add-to-new ..."> (nincs href)
+        // Javítás: <a href="#" class="wishlist-add-to-new ...">
+        // Egyszerűen beszúrunk egy href="#"-t a class elé.
+        if (strpos($html, 'class="wishlist-add-to-new') !== false) {
+            $html = str_replace(
+                'class="wishlist-add-to-new',
+                'href="#" class="wishlist-add-to-new',
+                $html
+            );
+        }
 
         return $html;
     }
