@@ -97,9 +97,9 @@
             }
         }
 
-        // --- B. LISTA MENNYISÉG (JAVÍTOTT MATEK: NINCS DUPLA SZÁMOLÁS) ---
+        // --- B. LISTA MENNYISÉG (SMART STOCK + GOOGLE FIX) ---
         if (typeof elek_cfg !== 'undefined' && elek_cfg.list_qty) {
-            console.log("--- ElekOptimizer: Smart Stock Mode (Fix Math) ---");
+            console.log("--- ElekOptimizer: Smart Stock Mode (Fetch + Aria Fix) ---");
 
             document.querySelectorAll(".js-product-miniature, .product-miniature").forEach(function(card) {
                 if (card.querySelector(".elek-list-qty")) return;
@@ -109,7 +109,7 @@
 
                 if (anyBtn && parent) {
                     
-                    // KOSÁR KERESŐ
+                    // 1. KOSÁR KERESŐ SEGÉD (A matekhoz kell)
                     var getCartQty = function(targetID) {
                         if (!targetID) return 0;
                         if (typeof prestashop !== 'undefined' && prestashop.cart && Array.isArray(prestashop.cart.products)) {
@@ -124,10 +124,14 @@
                         return 0;
                     };
 
+                    // 2. HTML LÉTREHOZÁSA (GOOGLE FIX: Aria + Title)
+                    var ariaTxt = (typeof elek_t !== 'undefined' && elek_t.qtyAria && elek_t.qtyAria !== "") ? elek_t.qtyAria : "Quantity";
+                    
                     var w = document.createElement("div"); w.className = "elek-list-qty";
-                    w.innerHTML = '<button type="button" class="btn-m">-</button>' +
-                                  '<input type="number" class="list-qty-input" value="1" min="1">' +
-                                  '<button type="button" class="btn-p">+</button>';
+                    // Itt a javítás: title="" attribútum is van
+                    w.innerHTML = '<button type="button" class="btn-m" aria-label="Less">-</button>' +
+                                  '<input type="number" class="list-qty-input" value="1" min="1" aria-label="' + ariaTxt + '" title="' + ariaTxt + '">' +
+                                  '<button type="button" class="btn-p" aria-label="More">+</button>';
 
                     try {
                         parent.insertBefore(w, anyBtn);
@@ -138,6 +142,7 @@
 
                     var inp = w.querySelector(".list-qty-input");
 
+                    // 3. KOSÁRBA RAKÁS (FETCH - Hogy működjön az Okos Hibaüzenet)
                     anyBtn.addEventListener("click", function(e) {
                         var q = parseInt(inp.value);
                         if (q < 1) return;
@@ -162,7 +167,7 @@
                             if (data.success) {
                                 prestashop.emit("updateCart", { reason: { linkAction: "add-to-cart" }, resp: data });
                             } else {
-                                // --- HIBAKEZELÉS ---
+                                // --- HIBAKEZELÉS (A TE OKOS MATEKOD) ---
                                 inp.value = 1;
 
                                 var inCart = getCartQty(finalID);
@@ -176,12 +181,7 @@
                                 var customMsg = "";
 
                                 if (matches) {
-                                    // ITT A JAVÍTÁS: Nem adjuk hozzá a kosarat, mert a hibaüzenet már a teljes készletet mondja!
                                     var totalStock = parseInt(matches[0]); 
-                                    
-                                    // Ha véletlenül a hibaüzenet mégis kisebb lenne mint a kosár (pl. "még 2 maradt"), 
-                                    // csak akkor adnánk össze, de a te esetedben a TOTAL jön vissza.
-                                    // Ezért simán használjuk a matches[0]-t.
                                     customMsg = t_total.replace("%s", totalStock);
                                 } else {
                                     customMsg = t_none;
