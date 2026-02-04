@@ -290,28 +290,153 @@
         }
     }
 
-    // --- 3. EGYSZERI FIXEK (DOM READY) ---
+    // --- 3. EGYSZERI FIXEK (DOM READY - LOOP MENTES VERZIÓ) ---
     document.addEventListener('DOMContentLoaded', function() {
-        if (typeof elek_cfg !== 'undefined' && elek_cfg.heading_fix) {
-            document.querySelectorAll('h5.product-name').forEach(el => {
-                const h2 = document.createElement('h2');
-                h2.innerHTML = el.innerHTML; h2.className = el.className;
-                el.parentNode.replaceChild(h2, el);
+        
+        // --- 1. VÉDELEM: Megakadályozza a duplázódást ---
+        if (window.elekScriptLoaded) return;
+        window.elekScriptLoaded = true;
+
+        // A FŐ INDÍTÓ FÜGGVÉNY (Ez fogja össze a run-t és a fixeket)
+        var elekInditas = function() {
+            
+            // 1. VÉDELEM: Megnézzük, fut-e már éppen a folyamat?
+            if (window.elekIsRunning) return; 
+            window.elekIsRunning = true; // Jelezzük, hogy most dolgozunk
+
+            // --- A. Heading Fix ---
+            if (typeof elek_cfg !== 'undefined' && elek_cfg.heading_fix) {
+                document.querySelectorAll('h5.product-name:not(.elek-fixed)').forEach(function(el) {
+                    var h2 = document.createElement('h2');
+                    h2.innerHTML = el.innerHTML; 
+                    h2.className = el.className;
+                    el.parentNode.replaceChild(h2, el);
+                    h2.classList.add('elek-fixed');
+                });
+            }
+
+            // --- B. Slick Slider Fix (Aria) ---
+            if (window.jQuery && window.jQuery.fn.slick) {
+                $('.slick-slider').each(function() {
+                    if ($(this).hasClass('elek-slick-fixed')) return;
+                    $(this).addClass('elek-slick-fixed');
+                    
+                    $(this).off('afterChange init').on('afterChange init', function() {
+                        $(this).find('.slick-slide[aria-hidden="true"] a').attr('tabindex', '-1');
+                        $(this).find('.slick-slide[aria-hidden="false"] a').attr('tabindex', '0');
+                    }).find('.slick-slide[aria-hidden="true"] a').attr('tabindex', '-1');
+                });
+            }
+            
+            // --- C. A TE KÓDOD FUTTATÁSA (Gombok + Kosár) ---
+            // Itt hívjuk meg a fenti run() függvényt biztonságosan!
+            if (typeof run === 'function') {
+                run(); 
+            }
+
+            // VÉGE: Levesszük a jelzést, jöhet a következő kör (ha muszáj)
+            setTimeout(function(){ window.elekIsRunning = false; }, 200);
+        };
+
+        // 2. INDÍTÁS (Oldalbetöltéskor)
+        setTimeout(elekInditas, 100);
+        setTimeout(elekInditas, 1500); // Biztonsági tartalék lassú gépekre
+
+        // 3. PRESTASHOP ESEMÉNYEK FIGYELÉSE (JAVÍTOTT)
+        if (typeof prestashop !== 'undefined') {
+            
+            // A. Ha a szűrőt használják (Kategória oldal)
+            prestashop.on('updateProductList', function() {
+                if (window.elekTimer) clearTimeout(window.elekTimer);
+                window.elekTimer = setTimeout(function() {
+                    window.elekIsRunning = false; 
+                    if(typeof elekInditas === 'function') elekInditas();
+                    else if(typeof run === 'function') run(); // Régebbi kód kompatibilitás
+                }, 1000);
+            });
+
+            // B. Ha a KOSÁR változik (EZ HIÁNYZOTT!)
+            prestashop.on('updateCart', function() {
+                // Várunk 1 másodpercet, hogy a PrestaShop kicserélje a sávot
+                setTimeout(function() {
+                    
+                    // ÚJRA megkeressük a helyet és berakjuk a gombot
+                    if (typeof elek_cfg !== 'undefined' && elek_cfg.empty_cart) {
+                        var cr = document.querySelector("#js-cart-sidebar .cart-products-count");
+                        
+                        // Csak akkor rakjuk be, ha már nincs ott (ne duplázzuk)
+                        if (cr && !document.querySelector(".elek-empty-cart-btn")) {
+                            
+                            var d = document.createElement("div"); d.className = "elek-empty-cart-btn";
+                            var btnTxt = (typeof elek_t !== 'undefined') ? elek_t.emptyBtn : "Empty Cart";
+                            
+                            d.innerHTML = '<a href="#" class="modern-empty-trigger">' + btnTxt + '</a>';
+                            
+                            d.querySelector(".modern-empty-trigger").onclick = function(e) {
+                                e.preventDefault();
+                                // Cache elleni védelem (Timestamp)
+                                var timestamp = new Date().getTime();
+                                var separator = elek_cfg.empty_url.includes('?') ? '&' : '?';
+                                var freshUrl = elek_cfg.empty_url + separator + 'nocache=' + timestamp;
+                                
+                                var btnYes = document.getElementById("elek-yes");
+                                if(btnYes) btnYes.href = freshUrl;
+                                
+                                var qTxt = (typeof elek_t !== 'undefined') ? elek_t.emptyQ : "Are you sure?";
+                                
+                                // Próbáljuk elérni a globális üzenetküldőt
+                                if (typeof showMsg === 'function') showMsg(qTxt, false);
+                                else if (typeof window.elekShowMsg === 'function') window.elekShowMsg(qTxt, false);
+                            };
+                            
+                            // Beszúrás
+                            if(cr.parentNode) cr.parentNode.insertBefore(d, cr.nextSibling);
+                        }
+                    }
+                }, 800); // 0.8 másodpercet várunk, hogy a sidebar betöltsön
             });
         }
-
-        const runSlick = () => {
-            if (window.jQuery && window.jQuery.fn.slick) {
-                $('.slick-slider').on('afterChange init', function() {
-                    $(this).find('.slick-slide[aria-hidden="true"] a').attr('tabindex', '-1');
-                    $(this).find('.slick-slide[aria-hidden="false"] a').attr('tabindex', '0');
-                }).find('.slick-slide[aria-hidden="true"] a').attr('tabindex', '-1');
-            }
-        };
-        let checkJ = setInterval(function() { if (window.jQuery) { clearInterval(checkJ); runSlick(); } }, 100);
     });
 
-    // Motor indítása
-	run();
-    setInterval(run, 1000);
 })();
+
+// --- C. SLICK SLIDER FIX (MUTATION OBSERVER - VÉGLEGES) ---
+        // Folyamatosan figyeli a változásokat, és azonnal javítja a hiányzó címkéket
+        if (typeof elek_cfg !== 'undefined' && elek_cfg.slick_fix) {
+            console.log("--- ElekOptimizer: Slick Slider Watcher Active ---");
+
+            var applySlickLabels = function() {
+                // Megkeressük a 'listbox' szerepű, de névtelen sávokat
+                var tracks = document.querySelectorAll('.slick-track[role="listbox"]:not([aria-label])');
+                
+                if (tracks.length > 0) {
+                    tracks.forEach(function(track) {
+                        // DETEKTÁLÁS: Próbáljuk kitalálni, mi ez (Márka vagy Termék?)
+                        var parentHtml = track.closest('.slick-slider') ? track.closest('.slick-slider').innerHTML : '';
+                        
+                        // Ha a "Solnde" vagy "manufacturer" szó benne van, akkor Márka
+                        var isBrand = parentHtml.indexOf('manufacturer') !== -1 || 
+                                      parentHtml.indexOf('/img/m/') !== -1 || 
+                                      track.innerText.indexOf('Solnde') !== -1;
+
+                        if (isBrand) {
+                            track.setAttribute('aria-label', 'Brand List');
+                        } else {
+                            track.setAttribute('aria-label', 'Product List');
+                        }
+                    });
+                }
+                
+                // Tabindex javítás (biztonsági)
+                document.querySelectorAll('.slick-slide[aria-hidden="true"] a').forEach(function(el){
+                     if(el.getAttribute('tabindex') !== '-1') el.setAttribute('tabindex', '-1');
+                });
+            };
+
+            // 1. Azonnali futtatás
+            applySlickLabels();
+
+            // Itt volt a hiba: 'fixSlickLabels' helyett 'applySlickLabels' kell!
+            setTimeout(applySlickLabels, 100);
+            setTimeout(applySlickLabels, 2000);
+        }
